@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useLocalStorage } from 'react-use';
+// import { useLocalStorage } from 'react-use';
+import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 
 import AddForm from '../common/AddForm/AddForm';
@@ -13,6 +14,8 @@ import Loader from '../common/Loader/Loader';
 import ItemsList from '../ItemsList/ItemsList';
 
 // import * as storage from '../../services/localStorage';
+// import * as actions from 'redux/cities/citiesActions';
+import { citiesActions } from 'redux/cities';
 import * as api from 'services/api';
 
 import addIcon from 'images/add.svg';
@@ -28,11 +31,15 @@ const ACTION = {
   DELETE: 'delete',
 };
 
-const FILTER_KEY = 'filter';
+// const FILTER_KEY = 'filter';
 
 const CitiesBlock = () => {
-  const [cities, setCities] = useState([]);
-  const [filter, setFilter] = useLocalStorage(FILTER_KEY, '');
+  const cities = useSelector(state => state.cities.items);
+  const filter = useSelector(state => state.cities.filter);
+  const dispatch = useDispatch();
+
+  // const [cities, setCities] = useState([]);
+  // const [filter, setFilter] = useLocalStorage(FILTER_KEY, '');
   // const [filter, setFilter] = useState(() => storage.get(FILTER_KEY) ?? '');
   // form / modal
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
@@ -51,8 +58,9 @@ const CitiesBlock = () => {
       setLoading(true);
       setError(null);
       try {
-        const cities = await api.getData(API_ENDPOINT);
-        setCities(cities);
+        const apiCities = await api.getData(API_ENDPOINT);
+        // setCities(cities);
+        dispatch(citiesActions.setCities(apiCities));
       } catch (error) {
         setError(error.message);
       } finally {
@@ -60,7 +68,7 @@ const CitiesBlock = () => {
       }
     };
     fetchCities();
-  }, []);
+  }, [dispatch]);
 
   // ADD CITY
 
@@ -87,7 +95,8 @@ const CitiesBlock = () => {
       setError(null);
       try {
         const newCity = await api.saveItem(API_ENDPOINT, activeCity);
-        setCities(prevCities => [...prevCities, newCity]);
+        // setCities(prevCities => [...prevCities, newCity]);
+        dispatch(citiesActions.addCity(newCity));
         toggleAddForm();
       } catch (error) {
         setError(error.message);
@@ -98,7 +107,7 @@ const CitiesBlock = () => {
       }
     };
     addCity();
-  }, [action, activeCity]);
+  }, [action, activeCity, dispatch]);
 
   // EDIT CITY
 
@@ -124,11 +133,12 @@ const CitiesBlock = () => {
       setError(null);
       try {
         const updatedCity = await api.editItem(API_ENDPOINT, activeCity);
-        setCities(prevCities =>
-          prevCities.map(city =>
-            city.id === updatedCity.id ? updatedCity : city,
-          ),
-        );
+        // setCities(prevCities =>
+        //   prevCities.map(city =>
+        //     city.id === updatedCity.id ? updatedCity : city,
+        //   ),
+        // );
+        dispatch(citiesActions.addCity(updatedCity));
       } catch (error) {
         setError(error.message);
       } finally {
@@ -139,7 +149,7 @@ const CitiesBlock = () => {
       }
     };
     editCity();
-  }, [action, activeCity]);
+  }, [action, activeCity, dispatch]);
 
   // DELETE CITY
 
@@ -158,9 +168,10 @@ const CitiesBlock = () => {
       setError(null);
       try {
         const deletedCity = await api.deleteItem(API_ENDPOINT, activeCity.id);
-        setCities(prevCities =>
-          prevCities.filter(city => city.id !== deletedCity.id),
-        );
+        // setCities(prevCities =>
+        //   prevCities.filter(city => city.id !== deletedCity.id),
+        // );
+        dispatch(citiesActions.deleteCity(deletedCity.id));
       } catch (error) {
         setError(error.message);
       } finally {
@@ -171,7 +182,7 @@ const CitiesBlock = () => {
       }
     };
     deleteCity();
-  }, [action, activeCity]);
+  }, [action, activeCity, dispatch]);
 
   const closeModal = () => {
     setOpenedModal(ACTION.NONE);
@@ -206,9 +217,10 @@ const CitiesBlock = () => {
   // Fix filter bug
   useEffect(() => {
     if (cities.length === 1) {
-      setFilter('');
+      // setFilter('');
+      dispatch(citiesActions.changeFilter(''));
     }
-  }, [cities.length, setFilter]);
+  }, [cities.length, dispatch]);
 
   return (
     <>
@@ -217,8 +229,8 @@ const CitiesBlock = () => {
       {cities.length > 1 && (
         <Filter
           label="Поиск города:"
-          value={filter}
-          onFilterChange={setFilter}
+          // value={filter}
+          // onFilterChange={setFilter}
         />
       )}
 
